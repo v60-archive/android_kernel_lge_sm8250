@@ -1265,6 +1265,13 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 		susfs_spoof_uname(&tmp);
 #endif
 	up_read(&uts_sem);
+
+	/* Fake uname to 5.4.0 for eBPF loader processes on legacy kernels */
+	if (!strcmp(current->comm, "netbpfload") ||
+	    !strcmp(current->comm, "bpfloader") ||
+	    !strcmp(current->comm, "netd")) {
+		strlcpy(tmp.release, "5.4.0", sizeof(tmp.release));
+	}
 	if (copy_to_user(name, &tmp, sizeof(tmp)))
 		return -EFAULT;
 
