@@ -18,7 +18,7 @@ include $(srctree)/arch/arm64/boot/dts/Makefile
 
 OBJCOPYFLAGS_Image :=-O binary -R .note -R .note.gnu.build-id -R .comment -S
 
-targets := Image Image.bz2 Image.gz Image.lz4 Image.lzma Image.lzo
+targets := Image Image.bz2 Image.gz Image.lz4 Image.lzma Image.lzo Image-dtb
 
 DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE_NAMES))
 ifneq ($(DTB_NAMES),)
@@ -26,7 +26,10 @@ DTB_LIST := $(addsuffix .dtb,$(DTB_NAMES))
 else
 DTB_LIST := $(dtb-y)
 endif
-DTB_OBJS := $(shell find $(obj)/dts/ -name \*.dtb)
+DTB_OBJS := $(wildcard $(obj)/dts/vendor/qcom/kona*.dtb)
+ifeq ($(strip $(DTB_OBJS)),)
+DTB_OBJS := $(wildcard $(obj)/dts/vendor/*/*.dtb)
+endif
 
 # Add RTIC DTB to the DTB list if RTIC MPGen is enabled
 # Note, we keep this for compatibility with
@@ -50,8 +53,14 @@ $(obj)/Image-dtb-hdr: $(obj)/Image FORCE
 	echo -n 'UNCOMPRESSED_IMG' > $@ && \
 	$(call size_append, $(filter-out FORCE,$^)) >> $@
 
+quiet_cmd_cat_dtb = CAT_DTB $@
+      cmd_cat_dtb = dtbs=$$(find $(obj)/dts -name "kona*.dtb" 2>/dev/null); \
+                    if [ -z "$$dtbs" ]; then dtbs=$$(find $(obj)/dts -name "*.dtb" 2>/dev/null); fi; \
+                    if [ -z "$$dtbs" ]; then echo "ERROR: No DTBs found to append to Image-dtb!" >&2; exit 1; fi; \
+                    cat $(obj)/Image $$dtbs > $@
+
 $(obj)/Image-dtb: $(obj)/Image $(DTB_OBJS) FORCE
-	$(call if_changed,cat)
+	$(call if_changed,cat_dtb)
 
 $(obj)/Image.gz: $(obj)/Image-dtb FORCE
 	$(call if_changed,gzip)
