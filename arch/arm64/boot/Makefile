@@ -50,10 +50,10 @@ $(obj)/Image-dtb-hdr: $(obj)/Image FORCE
 	echo -n 'UNCOMPRESSED_IMG' > $@ && \
 	$(call size_append, $(filter-out FORCE,$^)) >> $@
 
-$(obj)/Image-dtb: $(obj)/Image-dtb-hdr $(obj)/Image $(DTB_OBJS) FORCE
+$(obj)/Image-dtb: $(obj)/Image $(DTB_OBJS) FORCE
 	$(call if_changed,cat)
 
-$(obj)/Image.gz: $(obj)/Image FORCE
+$(obj)/Image.gz: $(obj)/Image-dtb FORCE
 	$(call if_changed,gzip)
 
 $(obj)/Image.lz4: $(obj)/Image FORCE

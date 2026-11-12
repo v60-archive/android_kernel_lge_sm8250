@@ -154,7 +154,7 @@ all:	$(KBUILD_DTBS) $(KBUILD_TARGET)
 Image: vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
 
-Image.%: Image
+Image.%: Image $(KBUILD_DTBS)
 	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
 
 zinstall install:
